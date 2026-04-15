@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OT Inventory · Stock Monitoring</title>
+  <meta name="description" content="Track inventory master data, serial numbers, and stock in/out movements." />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ================= Sidebar ================= -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">OT</div>
+        <div>
+          <div class="brand-title">OT Inventory</div>
+          <div class="brand-sub">Stock Monitoring</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-link" href="#overview"  data-section="overview"><span class="nav-icon">◉</span> Overview</a>
+        <a class="nav-link" href="#master"    data-section="master"><span class="nav-icon">☰</span> Master Data</a>
+        <a class="nav-link" href="#serials"   data-section="serials"><span class="nav-icon">#</span> Serial Numbers</a>
+        <a class="nav-link" href="#stockin"   data-section="stockin"><span class="nav-icon">↓</span> Stock In</a>
+        <a class="nav-link" href="#stockout"  data-section="stockout"><span class="nav-icon">↑</span> Stock Out</a>
+        <a class="nav-link" href="#activity"  data-section="activity"><span class="nav-icon">⌛</span> Activity Log</a>
+        <a class="nav-link" href="#settings"  data-section="settings"><span class="nav-icon">⚙</span> Settings</a>
+      </nav>
+    </aside>
+
+    <!-- ================= Main ================= -->
+    <main class="main">
+      <button id="menu-toggle" aria-label="Toggle menu">☰</button>
+
+      <!-- Overview -->
+      <section id="section-overview" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Overview</h1>
+            <div class="topbar-sub">A quick summary of your inventory and recent activity.</div>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi accent">
+            <div class="kpi-label">Total Items</div>
+            <div class="kpi-value" id="kpi-items">0</div>
+          </div>
+          <div class="kpi success">
+            <div class="kpi-label">Units In Stock</div>
+            <div class="kpi-value" id="kpi-units">0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Stock In (MTD)</div>
+            <div class="kpi-value" id="kpi-in-month">0</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Stock Out (MTD)</div>
+            <div class="kpi-value" id="kpi-out-month">0</div>
+          </div>
+          <div class="kpi danger">
+            <div class="kpi-label">Low Stock</div>
+            <div class="kpi-value" id="kpi-low">0</div>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Stock Movements (last 30 days)</h3></div>
+            <div id="chart-movements"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">Top Items by Stock</h3></div>
+            <div id="chart-top-items"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">Recent Activity</h3></div>
+          <ul class="activity-list" id="overview-activity"></ul>
+        </div>
+      </section>
+
+      <!-- Master Data -->
+      <section id="section-master" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Master Data</h1>
+            <div class="topbar-sub">Inventory items — ID, category, brand, model, device type.</div>
+          </div>
+          <div class="search">
+            <input type="text" id="master-search" placeholder="Search items…" />
+            <button class="btn-primary" data-action="add-master">+ Add Item</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Item ID</th><th>Item</th><th>Category</th><th>Brand</th>
+                <th>Model</th><th>Device Type</th><th class="num">In Stock</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="master-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Serial Numbers -->
+      <section id="section-serials" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Serial Numbers</h1>
+            <div class="topbar-sub">Individual units tracked by serial number and status.</div>
+          </div>
+          <div class="search">
+            <input type="text" id="serial-search" placeholder="Search serials…" />
+            <button class="btn-primary" data-action="add-serial">+ Add Serial</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Serial</th><th>Item ID</th><th>Item</th><th>Brand</th>
+                <th>Status</th><th>Received</th><th>Notes</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="serial-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Stock In -->
+      <section id="section-stockin" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Stock In</h1>
+            <div class="topbar-sub">Record incoming stock. Attach an optional serial number.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">New Stock-In Record</h3></div>
+          <form id="form-stockin">
+            <div class="grid-2">
+              <label>Item
+                <select name="itemId" class="item-select" required></select>
+                <small class="field-error" data-error="itemId"></small>
+              </label>
+              <label>Serial (optional)
+                <input type="text" name="serial" placeholder="e.g. SN-PRE363-0001" />
+                <small class="field-error" data-error="serial"></small>
+              </label>
+              <label>Quantity
+                <input type="number" name="qty" min="1" value="1" required />
+                <small class="field-error" data-error="qty"></small>
+              </label>
+              <label>Date
+                <input type="date" id="stockin-date" name="date" required />
+                <small class="field-error" data-error="date"></small>
+              </label>
+              <label>Source
+                <input type="text" name="source" placeholder="e.g. HQ Warehouse" />
+              </label>
+              <label>Note
+                <input type="text" name="note" placeholder="Optional notes" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Record Stock In</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">History</h3>
+            <div class="search"><input type="text" id="stockin-search" placeholder="Search…" /></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Date</th><th>Item ID</th><th>Serial</th>
+                  <th class="num">Qty</th><th>Source</th><th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="stockin-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stock Out -->
+      <section id="section-stockout" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Stock Out</h1>
+            <div class="topbar-sub">Record outgoing stock. Blocked if not enough in stock.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">New Stock-Out Record</h3></div>
+          <form id="form-stockout">
+            <div class="grid-2">
+              <label>Item
+                <select name="itemId" class="item-select" required></select>
+                <small class="field-error" data-error="itemId"></small>
+              </label>
+              <label>Serial (optional)
+                <input type="text" name="serial" placeholder="Serial being deployed" />
+                <small class="field-error" data-error="serial"></small>
+              </label>
+              <label>Quantity
+                <input type="number" name="qty" min="1" value="1" required />
+                <small class="field-error" data-error="qty"></small>
+              </label>
+              <label>Date
+                <input type="date" id="stockout-date" name="date" required />
+                <small class="field-error" data-error="date"></small>
+              </label>
+              <label>Destination
+                <input type="text" name="destination" placeholder="e.g. Site A" />
+              </label>
+              <label>Note
+                <input type="text" name="note" placeholder="Optional notes" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Record Stock Out</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">History</h3>
+            <div class="search"><input type="text" id="stockout-search" placeholder="Search…" /></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Date</th><th>Item ID</th><th>Serial</th>
+                  <th class="num">Qty</th><th>Destination</th><th>Note</th>
+                </tr>
+              </thead>
+              <tbody id="stockout-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Activity Log -->
+      <section id="section-activity" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Activity Log</h1>
+            <div class="topbar-sub">Chronological history of every change.</div>
+          </div>
+          <div class="search">
+            <select id="activity-type">
+              <option value="">All types</option>
+              <option value="STOCK_IN">Stock In</option>
+              <option value="STOCK_OUT">Stock Out</option>
+              <option value="CREATE_ITEM">Create Item</option>
+              <option value="UPDATE_ITEM">Update Item</option>
+              <option value="DELETE_ITEM">Delete Item</option>
+              <option value="CREATE_SERIAL">Create Serial</option>
+              <option value="UPDATE_SERIAL">Update Serial</option>
+              <option value="DELETE_SERIAL">Delete Serial</option>
+              <option value="IMPORT">Import</option>
+              <option value="RESET">Reset</option>
+            </select>
+            <input type="text" id="activity-search" placeholder="Search…" />
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>When</th><th>Type</th><th>Ref</th><th>Summary</th></tr>
+            </thead>
+            <tbody id="activity-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="section-settings" class="section">
+        <div class="topbar">
+          <div>
+            <h1>Settings</h1>
+            <div class="topbar-sub">Manage data — import, export, or reset to the seed template.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="setting-row">
+            <div>
+              <h4>Export data</h4>
+              <p>Download the current state as a JSON file (backup-friendly).</p>
+            </div>
+            <button class="btn-primary" data-action="export-json">Export JSON</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <h4>Import data</h4>
+              <p>Load a previously-exported JSON file. This replaces the current data.</p>
+            </div>
+            <div>
+              <button class="btn-ghost" data-action="import-json">Import JSON</button>
+              <input type="file" id="import-file" accept="application/json" hidden />
+            </div>
+          </div>
+          <div class="setting-row">
+            <div>
+              <h4>Reset to seed</h4>
+              <p>Re-inject <code>assets/js/data/seed.js</code>. Edit that file to change the template.</p>
+            </div>
+            <button class="btn-ghost" data-action="reset-seed">Reset to Seed</button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <h4>Clear all data</h4>
+              <p>Remove every record from browser storage. This cannot be undone.</p>
+            </div>
+            <button class="btn-ghost danger" data-action="clear-all">Clear All</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= Modal ================= -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Title</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts (order matters) -->
+  <script src="assets/js/data/seed.js"></script>
+  <script src="assets/js/data/schema.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
