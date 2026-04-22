@@ -31,7 +31,9 @@ service cloud.firestore {
     // • Only admins can delete user docs or toggle active flag
 
     match /users/{uid} {
-      allow read:   if isAuthed() && (request.auth.uid == uid || isAdmin());
+      // Any authenticated user can list users (needed for Users page & first-user check).
+      // Write restrictions below keep role/active fields protected.
+      allow read:   if isAuthed();
       allow create: if isAuthed() && request.auth.uid == uid;
       allow update: if isAuthed() && (
         // Admin can change anything

@@ -23,9 +23,15 @@ export function AuthProvider({ children }) {
         if (snap.exists()) {
           setUserProfile(snap.data())
         } else {
-          // If no users exist at all, this is the first admin; otherwise viewer
-          const anyUser = await getDocs(query(collection(db, 'users'), limit(1)))
-          const role    = anyUser.empty ? 'admin' : 'viewer'
+          // First user ever → admin. If query is denied by rules (collection
+          // already has users), catch and default to viewer.
+          let role = 'viewer'
+          try {
+            const anyUser = await getDocs(query(collection(db, 'users'), limit(1)))
+            if (anyUser.empty) role = 'admin'
+          } catch (_) {
+            role = 'viewer'
+          }
           const profile = {
             uid:       user.uid,
             name:      user.displayName ?? user.email.split('@')[0],
