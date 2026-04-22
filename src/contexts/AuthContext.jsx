@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, limit, query } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
 const AuthContext = createContext(null)
@@ -23,12 +23,14 @@ export function AuthProvider({ children }) {
         if (snap.exists()) {
           setUserProfile(snap.data())
         } else {
-          // First sign-in: create profile with viewer role
+          // If no users exist at all, this is the first admin; otherwise viewer
+          const anyUser = await getDocs(query(collection(db, 'users'), limit(1)))
+          const role    = anyUser.empty ? 'admin' : 'viewer'
           const profile = {
             uid:       user.uid,
             name:      user.displayName ?? user.email.split('@')[0],
             email:     user.email,
-            role:      'viewer',
+            role,
             active:    true,
             createdAt: serverTimestamp(),
           }
