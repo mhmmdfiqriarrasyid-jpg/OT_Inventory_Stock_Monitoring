@@ -12,6 +12,13 @@ const firebaseConfig = {
   measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('your_')) {
+  throw new Error(
+    'Firebase API key is missing or still a placeholder.\n' +
+    'Add VITE_FIREBASE_API_KEY to your GitHub repository secrets and re-run the workflow.'
+  )
+}
+
 const app = initializeApp(firebaseConfig)
 export const db   = getFirestore(app)
 export const auth = getAuth(app)
